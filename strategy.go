@@ -40,7 +40,6 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 		return nil
 	}
 
-	log.Println(message)
 	//log.Println("Got both books")
 
 	//
@@ -62,12 +61,15 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 	// }
 
 	//calculate fair value based on xTopBuy and xLowSell
+	prevFair := self.fairValue
 	self.fairValue = (self.xTopBuy + self.xLowSell) / 2
 
 	self.yTopBuy = self.yBook.Buy[0][0]
 	self.yLowSell = self.yBook.Sell[0][0]
 
-	log.Println("fairValue: ", self.fairValue)
+	if self.fairValue != prevFair {
+		log.Println("fairValue: ", self.fairValue, "y: ", self.yLowSell, " @ ", self.yTopBuy)
+	}
 
 	// for _, b := range book.Buy {
 	// 	if b.price > self.yTopBuy {
@@ -84,7 +86,7 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 	//if yLowSell < fairValue, buy Y
 
 	if self.yTopBuy > self.fairValue {
-		margin := (self.yTopBuy - self.fairValue) / 2
+		margin := (self.yTopBuy - self.fairValue) / 4 * 3
 		*orderId++
 		trades = append(trades, Order{
 			Type:    "add",
@@ -100,7 +102,7 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 
 	if self.yLowSell < self.fairValue {
 		*orderId++
-		margin := (self.fairValue - self.yLowSell) / 2
+		margin := (self.fairValue - self.yLowSell) / 4 * 3
 		trades = append(trades, Order{
 			Type:    "add",
 			OrderId: *orderId,
