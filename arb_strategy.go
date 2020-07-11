@@ -37,6 +37,16 @@ func NewArbStrategy(underlying []string, weights []int, composite string) *ArbSt
 // 3 MS
 // 2 WFC
 
+func vwap(xs [][2]int) int {
+	sum := 0
+	vol := 0
+	for _, x := range xs {
+		sum += x[0] * x[1]
+		vol += x[1]
+	}
+	return sum / vol
+}
+
 func (self *ArbStrategy) handle(message map[string]interface{}, orderId *int) (trades []interface{}) {
 	var book *Book
 	if message["type"] == "book" {
@@ -64,9 +74,9 @@ func (self *ArbStrategy) handle(message map[string]interface{}, orderId *int) (t
 	}
 
 	for i, stock := range self.underlying {
-		self.TopBuy[stock] = self.books[stock].Buy[0][0]
-		self.LowSell[stock] = self.books[stock].Sell[0][0]
-		underlying_fair_value := (self.TopBuy[stock] + self.LowSell[stock]) / 2
+		buy := vwap(self.books[stock].Buy)
+		sell := vwap(self.books[stock].Sell)
+		underlying_fair_value := (buy + sell) / 2
 		if stock == "BOND" {
 			underlying_fair_value = 1000
 		}
@@ -77,27 +87,29 @@ func (self *ArbStrategy) handle(message map[string]interface{}, orderId *int) (t
 	self.TopBuy[self.composite] = self.books[self.composite].Buy[0][0]
 	self.LowSell[self.composite] = self.books[self.composite].Sell[0][0]
 
-	if self.TopBuy[self.composite] > self.fairValue {
-		*orderId++
-		margin := (self.TopBuy[self.composite] - self.fairValue) / 2
-		trades = append(trades, Order{
-			Type:    "add",
-			OrderId: *orderId,
-			Symbol:  self.composite,
-			Dir:     "BUY",
-			Price:   self.fairValue + margin,
-			Size:    10,
-		})
-	}
+	log.Println("fairValue: ", self.fairValue, " ", vwap(self.books[self.composite].Buy), vwap(self.books[self.composite].Sell))
 
-	if self.LowSell[self.composite] < self.fairValue {
+	if vwap(self.books[self.composite].Buy) > self.fairValue {
 		*orderId++
-		margin := (self.fairValue - self.LowSell[self.composite]) / 2
+		margin := (self.TopBuy[self.composite] - vwap(self.books[self.composite].Buy)) / 2
 		trades = append(trades, Order{
 			Type:    "add",
 			OrderId: *orderId,
 			Symbol:  self.composite,
 			Dir:     "SELL",
+			Price:   self.fairValue + margin,
+			Size:    10,
+		})
+	}
+
+	if vwap(self.books[self.composite].Sell) < self.fairValue {
+		*orderId++
+		margin := (self.fairValue - vwap(self.books[self.composite].Sell)) / 2
+		trades = append(trades, Order{
+			Type:    "add",
+			OrderId: *orderId,
+			Symbol:  self.composite,
+			Dir:     "BUY",
 			Price:   self.fairValue - margin,
 			Size:    10,
 		})
@@ -109,6 +121,7 @@ func (self *ArbStrategy) handle(message map[string]interface{}, orderId *int) (t
 	for k, _ := range self.books {
 		self.books[k] = nil
 	}
+	self.fairValue = 0
 	self.books_obtained = 0
 	return trades
 }

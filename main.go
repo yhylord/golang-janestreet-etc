@@ -200,7 +200,7 @@ func main() {
 				putTrades(exchange, strategy.handle(message, &orderId))
 				putTrades(exchange, etfStrategy.handle(message, &orderId))
 
-				//bondStrategy.handle(message, &orderId)
+				bondStrategy.handle(message, &orderId)
 
 				time.Sleep(RETRY / 2)
 			}
