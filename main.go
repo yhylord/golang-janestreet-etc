@@ -86,8 +86,8 @@ func main() {
 		log.Printf("Failed to hello, error: %v\n", err)
 	}
 	var message map[string]interface{}
-	err := ReadFromExchange(exchange, &message)
-	if err == nil {
+	err_read := ReadFromExchange(exchange, &message)
+	if err_read == nil {
 		fmt.Println(message)
 	}
 	orderId := 0
@@ -97,7 +97,7 @@ func main() {
 			Type:    "add",
 			OrderId: orderId,
 			Symbol:  "BOND",
-			Dir:     "buy",
+			Dir:     "BUY",
 			Price:   999,
 			Size:    10,
 		})
@@ -106,7 +106,7 @@ func main() {
 			Type:    "add",
 			OrderId: orderId,
 			Symbol:  "BOND",
-			Dir:     "sell",
+			Dir:     "SELL",
 			Price:   1001,
 			Size:    10,
 		})
@@ -115,6 +115,9 @@ func main() {
 			filled := 0
 			for filled < 2 {
 				ReadFromExchange(exchange, &message)
+				if message["symbol"] == "BOND" {
+					log.Println(message)
+				}
 				if message["type"] == "fill" {
 					filled++
 				}
