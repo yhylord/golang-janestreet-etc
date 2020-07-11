@@ -21,6 +21,7 @@ func NewArbStrategy(underlying []string, weights []int, composite string) *ArbSt
 	self.underlying = underlying
 	self.weights = weights
 	self.composite = composite
+	sefl.books := make(map[string]*Book)
 	for _, stock := range underlying {
 		self.books[stock] = nil
 	}
