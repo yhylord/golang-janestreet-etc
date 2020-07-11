@@ -119,6 +119,7 @@ func main() {
 					var buy_filled, sell_filled int
 					if message["dir"] == "BUY" {
 						buy_filled = int(message["size"].(float64))
+						orderId++
 						WriteToExchange(exchange, Order{
 							Type:    "add",
 							OrderId: orderId,
@@ -130,6 +131,7 @@ func main() {
 					}
 					if message["dir"] == "SELL" {
 						sell_filled = int(message["size"].(float64))
+						orderId++
 						WriteToExchange(exchange, Order{
 							Type:    "add",
 							OrderId: orderId,
