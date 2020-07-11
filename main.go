@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -71,6 +72,7 @@ func main() {
 	log.SetFlags(log.Ltime | log.Lshortfile)
 	prod := flag.Bool("production", false, "production mode")
 	var host string
+	*prod = true
 	if *prod {
 		host = PROD_HOST + ":" + strconv.Itoa(BASE_PORT)
 	} else {
@@ -84,35 +86,68 @@ func main() {
 	if err != nil {
 		log.Printf("Failed to hello, error: %v\n", err)
 	}
+	var message map[string]interface{}
+	err_read := ReadFromExchange(exchange, &message)
+	if err_read == nil {
+		fmt.Println(message)
+	}
 	orderId := 0
 	for {
 		orderId++
-		WriteToExchange(exchange, Order{
+		err1 := WriteToExchange(exchange, Order{
 			Type:    "add",
 			OrderId: orderId,
 			Symbol:  "BOND",
-			Dir:     "buy",
+			Dir:     "BUY",
 			Price:   999,
 			Size:    10,
 		})
 		orderId++
-		WriteToExchange(exchange, Order{
+		err2 := WriteToExchange(exchange, Order{
 			Type:    "add",
 			OrderId: orderId,
 			Symbol:  "BOND",
-			Dir:     "sell",
+			Dir:     "SELL",
 			Price:   1001,
 			Size:    10,
 		})
-		var message map[string]interface{}
-		filled := 0
-		for filled < 2 {
-			ReadFromExchange(exchange, &message)
-			if message["type"] == "fill" {
-				filled++
+		if err1 == nil && err2 == nil {
+			var message map[string]interface{}
+			for {
+				ReadFromExchange(exchange, &message)
+				if message["type"] == "fill" {
+					var buy_filled, sell_filled int
+					if message["dir"] == "BUY" {
+						buy_filled = int(message["size"].(float64))
+						orderId++
+						WriteToExchange(exchange, Order{
+							Type:    "add",
+							OrderId: orderId,
+							Symbol:  "BOND",
+							Dir:     "BUY",
+							Price:   999,
+							Size:    buy_filled,
+						})
+					}
+					if message["dir"] == "SELL" {
+						sell_filled = int(message["size"].(float64))
+						orderId++
+						WriteToExchange(exchange, Order{
+							Type:    "add",
+							OrderId: orderId,
+							Symbol:  "BOND",
+							Dir:     "SELL",
+							Price:   1001,
+							Size:    sell_filled,
+						})
+					}
+					log.Printf("Buy filled: %v, Sell filled: %v\n", buy_filled, sell_filled)
+				}
+				time.Sleep(time.Millisecond)
 			}
-			time.Sleep(time.Millisecond)
+		} else {
+			log.Println("Error for buy order: ", err1)
+			log.Println("Error for sell order: ", err2)
 		}
-		log.Println("Penny pinching filled!")
 	}
 }
