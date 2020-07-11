@@ -87,7 +87,7 @@ func main() {
 	orderId := 0
 	for {
 		orderId++
-		WriteToExchange(exchange, Order{
+		err1 := WriteToExchange(exchange, Order{
 			Type:    "add",
 			OrderId: orderId,
 			Symbol:  "BOND",
@@ -96,7 +96,7 @@ func main() {
 			Size:    10,
 		})
 		orderId++
-		WriteToExchange(exchange, Order{
+		err2 := WriteToExchange(exchange, Order{
 			Type:    "add",
 			OrderId: orderId,
 			Symbol:  "BOND",
@@ -104,15 +104,20 @@ func main() {
 			Price:   1001,
 			Size:    10,
 		})
-		var message map[string]interface{}
-		filled := 0
-		for filled < 2 {
-			ReadFromExchange(exchange, &message)
-			if message["type"] == "fill" {
-				filled++
+		if err1 == nil && err2 == nil {
+			var message map[string]interface{}
+			filled := 0
+			for filled < 2 {
+				ReadFromExchange(exchange, &message)
+				if message["type"] == "fill" {
+					filled++
+				}
+				time.Sleep(time.Millisecond)
 			}
-			time.Sleep(time.Millisecond)
+			log.Println("Penny pinching filled!")
+		} else {
+			log.Println("Error for buy order: ", err1)
+			log.Println("Error for sell order: ", err2)
 		}
-		log.Println("Penny pinching filled!")
 	}
 }
