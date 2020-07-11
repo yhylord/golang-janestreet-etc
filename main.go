@@ -91,7 +91,7 @@ func WriteToExchange(exchange net.Conn, message interface{}) error {
 	return err
 }
 
-func putTrades(exchange net.Conn, orders []Order) {
+func putTrades(exchange net.Conn, orders []interface{}) {
 	for _, o := range orders {
 		WriteToExchange(exchange, o)
 	}
@@ -124,6 +124,7 @@ func main() {
 	orderId := 0
 	bonds := 0
 	strategy := new(Strategy)
+	etfStrategy := NewArbStrategy([]string{"BOND", "GS", "MS", "WFC"}, []int{3, 2, 3, 2}, "XLF")
 	for {
 		var err1, err2 error
 		for i := 0; i < 6; i++ {
@@ -197,6 +198,7 @@ func main() {
 				}
 
 				putTrades(exchange, strategy.handle(message, &orderId))
+				putTrades(exchange, etfStrategy.handle(message, &orderId))
 
 				//bondStrategy.handle(message, &orderId)
 

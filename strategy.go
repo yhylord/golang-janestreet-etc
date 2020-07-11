@@ -11,13 +11,13 @@ type Strategy struct {
 	// margin                                                   int
 	fairValue    int
 	xBook, yBook *Book
+	orders       []int
 }
 
 // ADR: VALE - Y
 // underlying: VALBZ - X
 
-func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trades []Order) {
-	//default message["type"] should be "book"
+func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trades []interface{}) {
 	var book *Book
 	if message["type"] == "book" {
 		book = BookFromMap(message)
@@ -86,6 +86,7 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 	//if yLowSell < fairValue, buy Y
 
 	if self.yTopBuy > self.fairValue {
+		// take 75th percentile
 		margin := (self.yTopBuy - self.fairValue) / 4 * 3
 		*orderId++
 		trades = append(trades, Order{
@@ -96,6 +97,7 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 			Price:   self.fairValue + margin,
 			Size:    10,
 		})
+		//orders = append(orders, *orderId)
 		self.xBook = nil
 		self.yBook = nil
 	}
@@ -111,10 +113,24 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 			Price:   self.fairValue - margin,
 			Size:    10,
 		})
+		//orders = append(orders, *orderId)
 		self.xBook = nil
 		self.yBook = nil
 	}
-	if len(trades) != 0 {
+
+	//decide margin based on historical successfully traded orders
+
+	/*	l := len(self.orders)
+		if l > 4 {
+			olds, self.orders := orders[:l-4], orders[l-4:]
+			for _, old := range olds {
+				trades = append(trades, Order{
+					Type:    "cancel",
+					OrderId: old,
+				})
+			}
+		}
+	*/if len(trades) != 0 {
 		log.Println("ADR trades: ", trades)
 	}
 	return trades
