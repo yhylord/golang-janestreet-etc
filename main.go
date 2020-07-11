@@ -105,7 +105,7 @@ func main() {
 			Symbol:  "BOND",
 			Dir:     "BUY",
 			Price:   999,
-			Size:    10,
+			Size:    30,
 		})
 		orderId++
 		err2 := WriteToExchange(exchange, Order{
@@ -114,7 +114,7 @@ func main() {
 			Symbol:  "BOND",
 			Dir:     "SELL",
 			Price:   1002,
-			Size:    10,
+			Size:    30,
 		})
 		if err1 == nil && err2 == nil {
 			var message map[string]interface{}
@@ -160,10 +160,10 @@ func main() {
 				}
 
 				if message["type"] == "trade" && message["symbol"] == "BOND" {
-					fmt.Println(message["size"], "bonds traded at ", message["type"])
+					fmt.Println(message["size"], "bonds traded at ", message["price"])
 				}
 
-				time.Sleep(RETRY)
+				time.Sleep(RETRY / 2)
 			}
 		} else {
 			log.Println("Error for buy order: ", err1)
