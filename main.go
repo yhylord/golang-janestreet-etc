@@ -41,9 +41,10 @@ type Order struct {
 	Size    int    `json:"size"`
 }
 
-/*func NewOrder(type_, symbol, dir string, price, size int) *Order {
-	return new
-}*/
+func NewOrder(type_, symbol, dir string, price, size int) *Order {
+	m := new(Order)
+
+}
 
 func tcpConnect(host string) net.Conn {
 	for {
@@ -135,14 +136,23 @@ func main() {
 					}
 					if message["dir"] == "SELL" {
 						sell_filled = int(message["size"].(float64))
+						half := sell_filled / 2
 						orderId++
 						WriteToExchange(exchange, Order{
 							Type:    "add",
 							OrderId: orderId,
 							Symbol:  "BOND",
 							Dir:     "SELL",
+							Price:   1001,
+							Size:    sell_filled - half,
+						})
+						WriteToExchange(exchange, Order{
+							Type:    "add",
+							OrderId: orderId,
+							Symbol:  "BOND",
+							Dir:     "SELL",
 							Price:   1002,
-							Size:    sell_filled,
+							Size:    half,
 						})
 					}
 					log.Printf("Buy filled: %v, Sell filled: %v\n", buy_filled, sell_filled)
