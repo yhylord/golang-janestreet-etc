@@ -1,7 +1,4 @@
 while true
 do
-	./main &
-	pid = $!
-	sleep 15
-	kill $pid
+	timeout 20 ./main -- -production
 done
