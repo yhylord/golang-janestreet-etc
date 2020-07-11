@@ -46,10 +46,10 @@ type Pair struct {
 }
 
 type Book struct {
-	Type   string `json:"type"`
-	Symbol string `json:"symbol"`
-	Buy    []Pair `json:"buy"`
-	Sell   []Pair `json:"sell"`
+	Type   string   `json:"type"`
+	Symbol string   `json:"symbol"`
+	Buy    [][2]int `json:"buy"`
+	Sell   [][2]int `json:"sell"`
 }
 
 func BookFromMap(message map[string]interface{}) *Book {

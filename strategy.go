@@ -1,6 +1,9 @@
 package main
 
-import "log"
+import (
+	"fmt"
+	"log"
+)
 
 type Strategy struct {
 	// you can store state here, e.g. countBuyorder int
@@ -44,8 +47,8 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 	//!! haven't dealt with oderID & margin
 	//
 
-	self.xTopBuy = self.xBook.Buy[0].price
-	self.xLowSell = self.xBook.Sell[0].price
+	self.xTopBuy = self.xBook.Buy[0][0]
+	self.xLowSell = self.xBook.Sell[0][0]
 
 	// for _, b := range book.Buy {
 	// 	if b.price > self.xTopBuy {
@@ -61,18 +64,21 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 	//calculate fair value based on xTopBuy and xLowSell
 	self.fairValue = (self.xTopBuy + self.xLowSell) / 2
 
-	self.yTopBuy = self.yBook.Buy[0].price
-	self.yLowSell = self.yBook.Sell[0].price
-		// for _, b := range book.Buy {
-		// 	if b.price > self.yTopBuy {
-		// 		self.yTopBuy = b.price
-		// 	}
-		// }
-		// for _, s := range book.Sell {
-		// 	if s.price < self.xLowSell {
-		// 		self.yLowSell = s.price
-		// 	}
-		// }
+	self.yTopBuy = self.yBook.Buy[0][0]
+	self.yLowSell = self.yBook.Sell[0][0]
+
+	fmt.Println("fairValue: ")
+
+	// for _, b := range book.Buy {
+	// 	if b.price > self.yTopBuy {
+	// 		self.yTopBuy = b.price
+	// 	}
+	// }
+	// for _, s := range book.Sell {
+	// 	if s.price < self.xLowSell {
+	// 		self.yLowSell = s.price
+	// 	}
+	// }
 
 	//if yTopBuy > fairValue, sell Y
 	//if yLowSell < fairValue, buy Y
