@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -83,6 +84,11 @@ func main() {
 	})
 	if err != nil {
 		log.Printf("Failed to hello, error: %v\n", err)
+	}
+	var message map[string]interface{}
+	err := ReadFromExchange(exchange, &message)
+	if err == nil {
+		fmt.Println(message)
 	}
 	orderId := 0
 	for {
