@@ -103,7 +103,7 @@ func main() {
 			OrderId: orderId,
 			Symbol:  "BOND",
 			Dir:     "BUY",
-			Price:   998,
+			Price:   999,
 			Size:    10,
 		})
 		orderId++
@@ -129,7 +129,7 @@ func main() {
 							OrderId: orderId,
 							Symbol:  "BOND",
 							Dir:     "BUY",
-							Price:   998,
+							Price:   999,
 							Size:    buy_filled,
 						})
 					}
