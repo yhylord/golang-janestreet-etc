@@ -41,6 +41,24 @@ type Order struct {
 	Size    int    `json:"size"`
 }
 
+type Pair struct {
+	price, size int
+}
+
+type Book struct {
+	Type   string `json:"type"`
+	Symbol string `json:"symbol"`
+	Buy    []Pair `json:"buy"`
+	Sell   []Pair `json:"sell"`
+}
+
+func BookFromMap(message map[string]interface{}) *Book {
+	book := new(Book)
+	bytes, _ := json.Marshal(message)
+	json.Unmarshal(bytes, book)
+	return book
+}
+
 // func NewOrder(order_type, symbol, dir string, price, size int) *Order {
 
 // 	return &Order{}
@@ -54,7 +72,7 @@ func tcpConnect(host string) net.Conn {
 			log.Println("Connection established.")
 			return exchange
 		} else {
-			log.Println("Connection failed. Retrying in " + RETRY.String())
+			log.Println("Connection failed. ", err, "Retrying in "+RETRY.String())
 			time.Sleep(RETRY)
 		}
 	}
@@ -98,6 +116,7 @@ func main() {
 	}
 	orderId := 0
 	bonds := 0
+	strategy := new(Strategy)
 	for {
 		var err1, err2 error
 		for i := 0; i < 6; i++ {
@@ -150,7 +169,7 @@ func main() {
 							Symbol:  "BOND",
 							Dir:     "SELL",
 							Price:   1001,
-							Size:    sell_filled - half,
+							Size:    half,
 						})
 						orderId++
 						WriteToExchange(exchange, Order{
@@ -159,16 +178,19 @@ func main() {
 							Symbol:  "BOND",
 							Dir:     "SELL",
 							Price:   1002,
-							Size:    half,
+							Size:    sell_filled - half,
 						})
 						bonds -= sell_filled
 					}
-					log.Printf("Buy filled: %v, Sell filled: %v\n, Currently holding: %v\n", buy_filled, sell_filled, bonds)
+					log.Printf("Buy filled: %v, Sell filled: %v, Currently holding: %v\n", buy_filled, sell_filled, bonds)
 				}
 
 				if message["type"] == "trade" && message["symbol"] == "BOND" {
 					log.Println(message["size"], "bonds traded at ", message["price"])
 				}
+
+				strategy.handle(message, &orderId)
+				//bondStrategy.handle(message, &orderId)
 
 				time.Sleep(RETRY / 2)
 			}
