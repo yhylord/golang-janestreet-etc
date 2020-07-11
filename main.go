@@ -41,6 +41,11 @@ type Order struct {
 	Size    int    `json:"size"`
 }
 
+// func NewOrder(order_type, symbol, dir string, price, size int) *Order {
+
+// 	return &Order{}
+// }
+
 func tcpConnect(host string) net.Conn {
 	for {
 		log.Println("Establishing connection to " + host)
@@ -72,6 +77,7 @@ func main() {
 	log.SetFlags(log.Ltime | log.Lshortfile)
 	prod := flag.Bool("production", false, "production mode")
 	var host string
+	*prod = true
 	if *prod {
 		host = PROD_HOST + ":" + strconv.Itoa(BASE_PORT)
 	} else {
@@ -91,39 +97,81 @@ func main() {
 		fmt.Println(message)
 	}
 	orderId := 0
+	bonds := 0
 	for {
-		orderId++
-		err1 := WriteToExchange(exchange, Order{
-			Type:    "add",
-			OrderId: orderId,
-			Symbol:  "BOND",
-			Dir:     "BUY",
-			Price:   999,
-			Size:    10,
-		})
-		orderId++
-		err2 := WriteToExchange(exchange, Order{
-			Type:    "add",
-			OrderId: orderId,
-			Symbol:  "BOND",
-			Dir:     "SELL",
-			Price:   1001,
-			Size:    10,
-		})
+		var err1, err2 error
+		for i := 0; i < 6; i++ {
+			orderId++
+			err1 = WriteToExchange(exchange, Order{
+				Type:    "add",
+				OrderId: orderId,
+				Symbol:  "BOND",
+				Dir:     "BUY",
+				Price:   999,
+				Size:    5,
+			})
+
+			orderId++
+			err2 = WriteToExchange(exchange, Order{
+				Type:    "add",
+				OrderId: orderId,
+				Symbol:  "BOND",
+				Dir:     "SELL",
+				Price:   1002,
+				Size:    5,
+			})
+		}
 		if err1 == nil && err2 == nil {
 			var message map[string]interface{}
-			filled := 0
-			for filled < 2 {
+			for {
 				ReadFromExchange(exchange, &message)
-				if message["symbol"] == "BOND" {
-					log.Println(message)
-				}
 				if message["type"] == "fill" {
-					filled++
+					var buy_filled, sell_filled int
+					if message["dir"] == "BUY" {
+						buy_filled = int(message["size"].(float64))
+						orderId++
+						WriteToExchange(exchange, Order{
+							Type:    "add",
+							OrderId: orderId,
+							Symbol:  "BOND",
+							Dir:     "BUY",
+							Price:   999,
+							Size:    buy_filled,
+						})
+						bonds += buy_filled
+					}
+					if message["dir"] == "SELL" {
+						sell_filled = int(message["size"].(float64))
+						half := sell_filled / 2
+						orderId++
+						WriteToExchange(exchange, Order{
+							Type:    "add",
+							OrderId: orderId,
+							Symbol:  "BOND",
+							Dir:     "SELL",
+							Price:   1001,
+							Size:    sell_filled - half,
+						})
+						orderId++
+						WriteToExchange(exchange, Order{
+							Type:    "add",
+							OrderId: orderId,
+							Symbol:  "BOND",
+							Dir:     "SELL",
+							Price:   1002,
+							Size:    half,
+						})
+						bonds -= sell_filled
+					}
+					log.Printf("Buy filled: %v, Sell filled: %v\n, Currently holding: %v\n", buy_filled, sell_filled, bonds)
 				}
-				time.Sleep(time.Millisecond)
+
+				if message["type"] == "trade" && message["symbol"] == "BOND" {
+					log.Println(message["size"], "bonds traded at ", message["price"])
+				}
+
+				time.Sleep(RETRY / 2)
 			}
-			log.Println("Penny pinching filled!")
 		} else {
 			log.Println("Error for buy order: ", err1)
 			log.Println("Error for sell order: ", err2)
