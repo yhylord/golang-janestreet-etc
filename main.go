@@ -112,14 +112,18 @@ func main() {
 		})
 		if err1 == nil && err2 == nil {
 			var message map[string]interface{}
-			filled := 0
-			for filled < 2 {
+			buy_filled := 0
+			sell_filled := 0
+			for buy_filled < 10 && sell_filled < 10 {
 				ReadFromExchange(exchange, &message)
-				if message["symbol"] == "BOND" {
-					log.Println(message)
-				}
 				if message["type"] == "fill" {
-					filled++
+					if message["dir"] == "BUY" {
+						buy_filled += message["size"].(int)
+					}
+					if message["dir"] == "SELL" {
+						sell_filled += message["size"].(int)
+					}
+					log.Printf("Buy filled: %v, Sell filled: %v\n", buy_filled, sell_filled)
 				}
 				time.Sleep(time.Millisecond)
 			}
