@@ -97,25 +97,30 @@ func main() {
 		fmt.Println(message)
 	}
 	orderId := 0
+	bonds := 0
 	for {
-		orderId++
-		err1 := WriteToExchange(exchange, Order{
-			Type:    "add",
-			OrderId: orderId,
-			Symbol:  "BOND",
-			Dir:     "BUY",
-			Price:   999,
-			Size:    30,
-		})
-		orderId++
-		err2 := WriteToExchange(exchange, Order{
-			Type:    "add",
-			OrderId: orderId,
-			Symbol:  "BOND",
-			Dir:     "SELL",
-			Price:   1002,
-			Size:    30,
-		})
+		var err1, err2 error
+		for i := 0; i < 6; i++ {
+			orderId++
+			err1 = WriteToExchange(exchange, Order{
+				Type:    "add",
+				OrderId: orderId,
+				Symbol:  "BOND",
+				Dir:     "BUY",
+				Price:   999,
+				Size:    5,
+			})
+
+			orderId++
+			err2 = WriteToExchange(exchange, Order{
+				Type:    "add",
+				OrderId: orderId,
+				Symbol:  "BOND",
+				Dir:     "SELL",
+				Price:   1002,
+				Size:    5,
+			})
+		}
 		if err1 == nil && err2 == nil {
 			var message map[string]interface{}
 			for {
@@ -133,6 +138,7 @@ func main() {
 							Price:   999,
 							Size:    buy_filled,
 						})
+						bonds += buy_filled
 					}
 					if message["dir"] == "SELL" {
 						sell_filled = int(message["size"].(float64))
@@ -155,12 +161,13 @@ func main() {
 							Price:   1002,
 							Size:    half,
 						})
+						bonds -= sell_filled
 					}
-					log.Printf("Buy filled: %v, Sell filled: %v\n", buy_filled, sell_filled)
+					log.Printf("Buy filled: %v, Sell filled: %v\n, Currently holding: %v\n", buy_filled, sell_filled, bonds)
 				}
 
 				if message["type"] == "trade" && message["symbol"] == "BOND" {
-					fmt.Println(message["size"], "bonds traded at ", message["price"])
+					log.Println(message["size"], "bonds traded at ", message["price"])
 				}
 
 				time.Sleep(RETRY / 2)
