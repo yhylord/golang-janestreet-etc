@@ -91,11 +91,18 @@ func WriteToExchange(exchange net.Conn, message interface{}) error {
 	return err
 }
 
+func putTrades(exchange net.Conn, orders []Order) {
+	for _, o := range orders {
+		WriteToExchange(exchange, o)
+	}
+}
+
 func main() {
 	log.SetFlags(log.Ltime | log.Lshortfile)
-	prod := flag.Bool("production", false, "production mode")
+	prod := flag.Bool("prod", false, "production mode")
+	flag.Parse()
+	log.Println("prodL: ", *prod)
 	var host string
-	*prod = true
 	if *prod {
 		host = PROD_HOST + ":" + strconv.Itoa(BASE_PORT)
 	} else {
@@ -189,7 +196,8 @@ func main() {
 					log.Println(message["size"], "bonds traded at ", message["price"])
 				}
 
-				strategy.handle(message, &orderId)
+				putTrades(exchange, strategy.handle(message, &orderId))
+
 				//bondStrategy.handle(message, &orderId)
 
 				time.Sleep(RETRY / 2)
