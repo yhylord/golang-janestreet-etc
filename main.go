@@ -23,6 +23,8 @@ const BASE_PORT = 25000
 const TEST_HOST = "test-exch-THEGRANDLIKEKING"
 const PROD_HOST = "production"
 
+const RETRY = 10 * time.Millisecond
+
 type Hello struct {
 	Type string `json:"type"`
 	Team string `json:"team"`
@@ -39,7 +41,6 @@ type Order struct {
 }
 
 func tcpConnect(host string) net.Conn {
-	const RETRY = 10 * time.Millisecond
 	for {
 		log.Println("Establishing connection to " + host)
 		exchange, err := net.Dial("tcp", host)
@@ -53,11 +54,12 @@ func tcpConnect(host string) net.Conn {
 	}
 }
 
-/*func ReadFromExchange(exchange net.Conn) {
+func ReadFromExchange(exchange net.Conn, message interface{}) error {
 	reader := json.NewDecoder(exchange)
-	err := reader.Decode()
+	err := reader.Decode(message)
+	return err
 }
-*/
+
 func WriteToExchange(exchange net.Conn, message interface{}) error {
 	writer := json.NewEncoder(exchange)
 	err := writer.Encode(message)
@@ -75,8 +77,42 @@ func main() {
 		host = TEST_HOST + ":" + strconv.Itoa(BASE_PORT)
 	}
 	exchange := tcpConnect(host)
-	WriteToExchange(exchange, Hello{
+	err := WriteToExchange(exchange, Hello{
 		Type: "hello",
 		Team: TEAM_NAME,
 	})
+	if err != nil {
+		log.Printf("Failed to hello, error: %v\n", err)
+	}
+	orderId := 0
+	for {
+		orderId++
+		WriteToExchange(exchange, Order{
+			Type:    "add",
+			OrderId: orderId,
+			Symbol:  "BOND",
+			Dir:     "buy",
+			Price:   999,
+			Size:    10,
+		})
+		orderId++
+		WriteToExchange(exchange, Order{
+			Type:    "add",
+			OrderId: orderId,
+			Symbol:  "BOND",
+			Dir:     "sell",
+			Price:   1001,
+			Size:    10,
+		})
+		var message map[string]interface{}
+		filled := 0
+		for filled < 2 {
+			ReadFromExchange(exchange, &message)
+			if message["type"] == "fill" {
+				filled++
+			}
+			time.Sleep(time.Millisecond)
+		}
+		log.Println("Penny pinching filled!")
+	}
 }
