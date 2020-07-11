@@ -103,7 +103,7 @@ func main() {
 			OrderId: orderId,
 			Symbol:  "BOND",
 			Dir:     "BUY",
-			Price:   999,
+			Price:   998,
 			Size:    10,
 		})
 		orderId++
@@ -112,7 +112,7 @@ func main() {
 			OrderId: orderId,
 			Symbol:  "BOND",
 			Dir:     "SELL",
-			Price:   1001,
+			Price:   1002,
 			Size:    10,
 		})
 		if err1 == nil && err2 == nil {
@@ -129,7 +129,7 @@ func main() {
 							OrderId: orderId,
 							Symbol:  "BOND",
 							Dir:     "BUY",
-							Price:   999,
+							Price:   998,
 							Size:    buy_filled,
 						})
 					}
@@ -141,7 +141,7 @@ func main() {
 							OrderId: orderId,
 							Symbol:  "BOND",
 							Dir:     "SELL",
-							Price:   1001,
+							Price:   1002,
 							Size:    sell_filled,
 						})
 					}
