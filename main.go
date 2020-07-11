@@ -41,6 +41,10 @@ type Order struct {
 	Size    int    `json:"size"`
 }
 
+/*func NewOrder(type_, symbol, dir string, price, size int) *Order {
+	return new
+}*/
+
 func tcpConnect(host string) net.Conn {
 	for {
 		log.Println("Establishing connection to " + host)
@@ -143,7 +147,7 @@ func main() {
 					}
 					log.Printf("Buy filled: %v, Sell filled: %v\n", buy_filled, sell_filled)
 				}
-				time.Sleep(time.Millisecond)
+				time.Sleep(RETRY)
 			}
 		} else {
 			log.Println("Error for buy order: ", err1)
