@@ -21,7 +21,9 @@ func NewArbStrategy(underlying []string, weights []int, composite string) *ArbSt
 	self.underlying = underlying
 	self.weights = weights
 	self.composite = composite
-	sefl.books := make(map[string]*Book)
+	self.books = make(map[string]*Book)
+	self.TopBuy = make(map[string]int)
+	self.LowSell = make(map[string]int)
 	for _, stock := range underlying {
 		self.books[stock] = nil
 	}
@@ -40,6 +42,9 @@ func (self *ArbStrategy) handle(message map[string]interface{}, orderId *int) (t
 	if message["type"] == "book" {
 		book = BookFromMap(message)
 	} else {
+		return nil
+	}
+	if (len(book.Buy) == 0 || len(book.Sell) == 0) {
 		return nil
 	}
 
@@ -70,7 +75,7 @@ func (self *ArbStrategy) handle(message map[string]interface{}, orderId *int) (t
 	self.fairValue = self.fairValue / 10
 
 	self.TopBuy[self.composite] = self.books[self.composite].Buy[0][0]
-	self.TopBuy[self.composite] = self.books[self.composite].Sell[0][0]
+	self.LowSell[self.composite] = self.books[self.composite].Sell[0][0]
 
 	if self.TopBuy[self.composite] > self.fairValue {
 		*orderId++
@@ -101,6 +106,10 @@ func (self *ArbStrategy) handle(message map[string]interface{}, orderId *int) (t
 	if len(trades) != 0 {
 		log.Println("ETF trades: ", trades)
 	}
+	for k, _ := range self.books {
+		self.books[k] = nil
+	}
+	self.books_obtained = 0
 	return trades
 }
 
