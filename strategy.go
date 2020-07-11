@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -41,6 +40,7 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 		return nil
 	}
 
+	log.Println(message)
 	//log.Println("Got both books")
 
 	//
@@ -67,7 +67,7 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 	self.yTopBuy = self.yBook.Buy[0][0]
 	self.yLowSell = self.yBook.Sell[0][0]
 
-	fmt.Println("fairValue: ")
+	log.Println("fairValue: ", self.fairValue)
 
 	// for _, b := range book.Buy {
 	// 	if b.price > self.yTopBuy {
