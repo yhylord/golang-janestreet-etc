@@ -79,12 +79,12 @@ func (self *ArbStrategy) handle(message map[string]interface{}, orderId *int) (t
 
 	if self.TopBuy[self.composite] > self.fairValue {
 		*orderId++
-		margin := (self.TopBuy[self.composite] - self.fairValue) / 4 * 3
+		margin := (self.TopBuy[self.composite] - self.fairValue) / 2
 		trades = append(trades, Order{
 			Type:    "add",
 			OrderId: *orderId,
 			Symbol:  self.composite,
-			Dir:     "SELL",
+			Dir:     "BUY",
 			Price:   self.fairValue + margin,
 			Size:    10,
 		})
@@ -92,12 +92,12 @@ func (self *ArbStrategy) handle(message map[string]interface{}, orderId *int) (t
 
 	if self.LowSell[self.composite] < self.fairValue {
 		*orderId++
-		margin := (self.fairValue - self.LowSell[self.composite]) / 4 * 3
+		margin := (self.fairValue - self.LowSell[self.composite]) / 2
 		trades = append(trades, Order{
 			Type:    "add",
 			OrderId: *orderId,
 			Symbol:  self.composite,
-			Dir:     "BUY",
+			Dir:     "SELL",
 			Price:   self.fairValue - margin,
 			Size:    10,
 		})
