@@ -2,15 +2,16 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"log"
 	"net"
+	"strconv"
 	"time"
 )
 
 /*
  These constants decide which exchange to use (various test ones or production).
 */
-const TEST_MODE = false
 const TEST_EXCHANGE_INDEX = 0
 
 /*
@@ -19,8 +20,13 @@ const TEST_EXCHANGE_INDEX = 0
 // TODO: Check these constants when the real thing happens
 const TEAM_NAME = "THEGRANDLIKEKING"
 const BASE_PORT = 25000
-const TEST_HOST = "test-exch"
+const TEST_HOST = "test-exch-THEGRANDLIKEKING"
 const PROD_HOST = "production"
+
+type Hello struct {
+	Type string `json:"type"`
+	Team string `json:"team"`
+}
 
 type Order struct {
 	// use capitalized names to become public
@@ -32,14 +38,14 @@ type Order struct {
 	Size    int    `json:"size"`
 }
 
-func tcpConnect(host string) *net.Conn {
+func tcpConnect(host string) net.Conn {
 	const RETRY = 10 * time.Millisecond
 	for {
 		log.Println("Establishing connection to " + host)
 		exchange, err := net.Dial("tcp", host)
 		if err == nil {
 			log.Println("Connection established.")
-			return &exchange
+			return exchange
 		} else {
 			log.Println("Connection failed. Retrying in " + RETRY.String())
 			time.Sleep(RETRY)
@@ -47,12 +53,30 @@ func tcpConnect(host string) *net.Conn {
 	}
 }
 
-func WriteToExchange(exchange *net.Conn) {
-	jsonWriter := json.NewEncoder(exchange)
-	jsonWriter.Encode()
+/*func ReadFromExchange(exchange net.Conn) {
+	reader := json.NewDecoder(exchange)
+	err := reader.Decode()
+}
+*/
+func WriteToExchange(exchange net.Conn, message interface{}) error {
+	writer := json.NewEncoder(exchange)
+	err := writer.Encode(message)
+	exchange.Write([]byte("\n"))
+	return err
 }
 
 func main() {
 	log.SetFlags(log.Ltime | log.Lshortfile)
-	tcpConnect(":8080")
+	prod := flag.Bool("production", false, "production mode")
+	var host string
+	if *prod {
+		host = PROD_HOST + ":" + strconv.Itoa(BASE_PORT)
+	} else {
+		host = TEST_HOST + ":" + strconv.Itoa(BASE_PORT)
+	}
+	exchange := tcpConnect(host)
+	WriteToExchange(exchange, Hello{
+		Type: "hello",
+		Team: TEAM_NAME,
+	})
 }
