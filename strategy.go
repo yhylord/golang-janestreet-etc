@@ -25,19 +25,20 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 
 	if book.Symbol == "VALBZ" {
 		self.xBook = book
-		log.Println("Got xBook")
+		//log.Println("Got xBook")
 	}
 
 	if book.Symbol == "VALE" {
 		self.yBook = book
-		log.Println("Got yBook")
+		//log.Println("Got yBook")
 	}
 
-	if self.xBook == nil || self.yBook == nil {
+	if self.xBook == nil || len(self.xBook.Buy) == 0 || len(self.xBook.Sell) == 0 ||
+		self.yBook == nil || len(self.yBook.Buy) == 0 || len(self.yBook.Sell) == 0 {
 		return nil
 	}
 
-	log.Println("Got both books")
+	//log.Println("Got both books")
 
 	//
 	//!! haven't dealt with oderID & margin
@@ -60,9 +61,8 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 	//calculate fair value based on xTopBuy and xLowSell
 	self.fairValue = (self.xTopBuy + self.xLowSell) / 2
 
-	if book.Symbol == "VALE" {
-		self.yTopBuy = book.Buy[0].price
-		self.yLowSell = book.Sell[0].price
+	self.yTopBuy = self.yBook.Buy[0].price
+	self.yLowSell = self.yBook.Sell[0].price
 		// for _, b := range book.Buy {
 		// 	if b.price > self.yTopBuy {
 		// 		self.yTopBuy = b.price
@@ -73,7 +73,6 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 		// 		self.yLowSell = s.price
 		// 	}
 		// }
-	}
 
 	//if yTopBuy > fairValue, sell Y
 	//if yLowSell < fairValue, buy Y
@@ -107,6 +106,8 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 		self.xBook = nil
 		self.yBook = nil
 	}
-	log.Println("ADR trades: ", trades)
+	if len(trades) != 0 {
+		log.Println("ADR trades: ", trades)
+	}
 	return trades
 }
