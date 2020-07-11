@@ -1,5 +1,7 @@
 package main
 
+import "log"
+
 type Strategy struct {
 	// you can store state here, e.g. countBuyorder int
 	xTopBuy, xLowSell, yTopBuy, yLowSell                     int
@@ -23,15 +25,19 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 
 	if book.Symbol == "VALBZ" {
 		self.xBook = book
+		log.Println("Got xBook")
 	}
 
 	if book.Symbol == "VALE" {
 		self.yBook = book
+		log.Println("Got yBook")
 	}
 
 	if self.xBook == nil || self.yBook == nil {
 		return nil
 	}
+
+	log.Println("Got both books")
 
 	//
 	//!! haven't dealt with oderID & margin
@@ -101,5 +107,6 @@ func (self *Strategy) handle(message map[string]interface{}, orderId *int) (trad
 		self.xBook = nil
 		self.yBook = nil
 	}
+	log.Println("ADR trades: ", trades)
 	return trades
 }
